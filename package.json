@@ -1,13 +1,13 @@
 {
-    "name": "com.github.sbfdevelopment.template",
-    "displayName": "SBFDevelopment package template",
-    "description": "template package for the SBFDevelopment organization",
-    "version": "0.0.0",
-    "author": {
-        "name": "AuthorName",
-        "email": "Author@email.com"
-    },
-    "dependencies": {
-
-    }
+  "name": "com.github.sbfdevelopment.pclink",
+  "displayName": "PC link",
+  "description": "package for sending world data to your local pc",
+  "version": "0.0.0",
+  "author": {
+    "name": "Cynic",
+    "email": "contact@cynic1254.com"
+  },
+  "dependencies": {
+    "com.vrchat.worlds": "3.10.4"
+  }
 }

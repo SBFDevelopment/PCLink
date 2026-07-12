@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "dependencies": {
+    "archiver": "^8.0.0",
+    "promisify-child-process": "^5.0.1",
+    "semver": "^7.8.5",
+    "tmp-promise": "^3.0.3"
+  },
+  "packageManager": "pnpm@11.11.0"
+}

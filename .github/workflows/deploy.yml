@@ -1,0 +1,54 @@
+name: 'Release VCC Package'
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.VCC_APP_ID }}
+          private-key: ${{ secrets.VCC_APP_PRIVATE_KEY }}
+          repositories: "${{ github.event.repository.name }},vcc-manifest"
+
+      - name: Checkout package repository
+        uses: actions/checkout@v6
+        with:
+          path: repo
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Checkout version manifest
+        uses: actions/checkout@v6
+        with:
+          path: versions
+          repository: SBFDevelopment/vcc-manifest
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v5
+        with:
+          package_json_file: repo/.github/scripts/package.json
+          standalone: true
+
+      - name: Run Bundle & Version Auto-Bump
+        working-directory: repo/.github/scripts
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm node bundle.js "$GITHUB_WORKSPACE/repo" "$GITHUB_WORKSPACE/versions"
+
+      - name: Push central version manifest
+        working-directory: versions
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git diff --quiet || (git commit -am "Register package update from ${{ github.repository }}@$GITHUB_SHA" && git push)

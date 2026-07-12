@@ -1,0 +1,13 @@
+{
+    "name": "com.github.sbfdevelopment.template",
+    "displayName": "SBFDevelopment package template",
+    "description": "template package for the SBFDevelopment organization",
+    "version": "0.0.0",
+    "author": {
+        "name": "AuthorName",
+        "email": "Author@email.com"
+    },
+    "dependencies": {
+
+    }
+}

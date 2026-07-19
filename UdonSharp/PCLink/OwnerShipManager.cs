@@ -99,7 +99,7 @@ namespace com.SBFDevelopment.PCLink
         [NetworkCallable]
         public void ResetOwnership()
         {
-            if (Networking.LocalPlayer != Networking.GetOwner(gameObject) || !InList(NetworkCalling.CallingPlayer.displayName)) return;
+            if (!Networking.LocalPlayer.IsOwner(gameObject) || !InList(NetworkCalling.CallingPlayer.displayName)) return;
             
             var players = GetSortedPlayerList(transferLogic == TransferLogic.LastJoined);
     
@@ -148,7 +148,7 @@ namespace com.SBFDevelopment.PCLink
         [NetworkCallable]
         public void SignalOwnerShipChange(VRCPlayerApi intendedOwner)
         {
-            if (NetworkCalling.CallingPlayer != Networking.GetOwner(gameObject))
+            if (!NetworkCalling.CallingPlayer.IsOwner(gameObject))
             {
                 return;
             }
@@ -160,9 +160,6 @@ namespace com.SBFDevelopment.PCLink
         #region Udon events
         public override void OnPlayerJoined(VRCPlayerApi player)
         {
-            if (Networking.LocalPlayer != Networking.GetOwner(gameObject))
-                return;
-
             if (Networking.LocalPlayer == player)
             {
                 if (transferLogic == TransferLogic.LastJoined)
@@ -172,6 +169,9 @@ namespace com.SBFDevelopment.PCLink
 
                 return;
             }
+            
+            if (!Networking.LocalPlayer.IsOwner(gameObject))
+                return;
 
             if (!_isIntendedOwner)
             {
@@ -182,7 +182,7 @@ namespace com.SBFDevelopment.PCLink
 
         public override bool OnOwnershipRequest(VRCPlayerApi requestingPlayer, VRCPlayerApi requestedOwner)
         {
-            return requestingPlayer == Networking.GetOwner(gameObject);
+            return requestingPlayer.IsOwner(gameObject);
         }
 
         public override void OnOwnershipTransferred(VRCPlayerApi player)
@@ -224,7 +224,7 @@ namespace com.SBFDevelopment.PCLink
             }
 
             // Are we the current owner?
-            if (Networking.LocalPlayer != Networking.GetOwner(gameObject))
+            if (!Networking.LocalPlayer.IsOwner(gameObject))
             {
                 SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(TransferOwnership), result.Result);
                 return;
@@ -244,7 +244,7 @@ namespace com.SBFDevelopment.PCLink
 
         public override void OnStringLoadError(IVRCStringDownload result)
         {
-            if (!result.Url.Equals(localhost) || Networking.LocalPlayer != Networking.GetOwner(gameObject))
+            if (!result.Url.Equals(localhost) || !Networking.LocalPlayer.IsOwner(gameObject))
                 return;
             
             // Is there someone to pass ownership to?

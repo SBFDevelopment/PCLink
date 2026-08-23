@@ -10,7 +10,7 @@ namespace com.SBFDevelopment.PCLink
     /// <summary>
     /// Transfer logic enum, represents how passing automatic ownership should work
     /// </summary>
-    enum TransferLogic
+    public enum TransferLogic
     {
         /// <summary>
         /// Use the first found player.

@@ -38,17 +38,17 @@ namespace com.SBFDevelopment.PCLink
         /// <summary>
         /// The logic to use when attempting to find a valid player
         /// </summary>
-        [SerializeField] private TransferLogic transferLogic = TransferLogic.FirstFound;
+        [SerializeField] protected TransferLogic transferLogic = TransferLogic.FirstFound;
         /// <summary>
         /// List of players that are allowed to own the object.
         /// This is a "soft" check, proper ownership still depends on the response from localhost url and if OnReceiveTransferData returns true.
         /// An empty list means every player will be tested if they can own the object
         /// </summary>
-        [SerializeField] private string[] allowedPlayers = { };
+        [SerializeField] protected string[] allowedPlayers = { };
         /// <summary>
         /// The url to test ownership against, apart from the port this shouldn't be changed
         /// </summary>
-        [SerializeField] private VRCUrl localhost = new VRCUrl("http://localhost:1254");
+        [SerializeField] protected VRCUrl localhost = new VRCUrl("http://localhost:1254");
         #endregion
 
         #region Private variables

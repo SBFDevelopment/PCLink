@@ -338,7 +338,9 @@ namespace com.SBFDevelopment.PCLink
                 }
 
                 // Swap the found player with the player at index i
-                (players[swapIndex], players[i]) = (players[i], players[swapIndex]);
+                VRCPlayerApi temp = players[swapIndex];
+                players[swapIndex] = players[i];
+                players[i] = temp;
             }
             
             return players;

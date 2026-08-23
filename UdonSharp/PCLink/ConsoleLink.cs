@@ -22,7 +22,7 @@ namespace com.SBFDevelopment.PCLink
         UNKNOWN
     }
     
-    class Base : UdonSharpBehaviour
+    public class ConsoleLink : UdonSharpBehaviour
     {
         public void SendJsonData(string json, NetworkEventTarget eventTarget = NetworkEventTarget.Owner)
         {

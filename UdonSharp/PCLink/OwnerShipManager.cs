@@ -32,7 +32,7 @@ namespace com.SBFDevelopment.PCLink
     /// Class that strictly maintains object ownership only to players that qualify.
     /// Qualification depends on response from localhost url and if OnReceiveTransferData returns true
     /// </summary>
-    class OwnerShipManager : UdonSharpBehaviour
+    public class OwnerShipManager : UdonSharpBehaviour
     {
         #region Settings
         /// <summary>

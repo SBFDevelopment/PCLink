@@ -132,7 +132,7 @@ namespace com.SBFDevelopment.PCLink
 
             if (OnReceiveTransferData(data))
             {
-                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(SignalOwnerShipChange), NetworkCalling.CallingPlayer);
+                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(SignalOwnerShipChange), NetworkCalling.CallingPlayer.ToString());
                 Networking.SetOwner(NetworkCalling.CallingPlayer, gameObject);
                 return;
             }
@@ -146,14 +146,14 @@ namespace com.SBFDevelopment.PCLink
         /// </summary>
         /// <param name="intendedOwner">The player the ownership is intended to be passed to</param>
         [NetworkCallable]
-        public void SignalOwnerShipChange(VRCPlayerApi intendedOwner)
+        public void SignalOwnerShipChange(string intendedOwner)
         {
             if (!NetworkCalling.CallingPlayer.IsOwner(gameObject))
             {
                 return;
             }
 
-            _isIntendedOwner = Networking.LocalPlayer == intendedOwner;
+            _isIntendedOwner = Networking.LocalPlayer.ToString() == intendedOwner;
         }
         #endregion
 

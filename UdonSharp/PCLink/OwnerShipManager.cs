@@ -74,7 +74,7 @@ namespace com.SBFDevelopment.PCLink
         /// <summary>
         ///     The url to test ownership against, apart from the port this shouldn't be changed
         /// </summary>
-        [SerializeField] protected VRCUrl localhost = new("http://localhost:1254");
+        [SerializeField] protected VRCUrl localhost = new VRCUrl("http://localhost:1254");
 
         #endregion
 

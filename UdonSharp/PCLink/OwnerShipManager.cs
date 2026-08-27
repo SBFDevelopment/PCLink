@@ -8,80 +8,44 @@ using VRC.Udon.Common.Interfaces;
 namespace com.SBFDevelopment.PCLink
 {
     /// <summary>
-    /// Transfer logic enum, represents how passing automatic ownership should work
+    ///     Transfer logic enum, represents how passing automatic ownership should work
     /// </summary>
     public enum TransferLogic
     {
         /// <summary>
-        /// Use the first found player.
-        /// This matches FirstJoined but is not guaranteed to be true in the future.
-        /// This should be the preferred method.
+        ///     Use the first found player.
+        ///     This matches FirstJoined but is not guaranteed to be true in the future.
+        ///     This should be the preferred method.
         /// </summary>
         FirstFound,
+
         /// <summary>
-        /// Use the player that joined first.
+        ///     Use the player that joined first.
         /// </summary>
         FirstJoined,
+
         /// <summary>
-        /// Use the player that joined last.
+        ///     Use the player that joined last.
         /// </summary>
         LastJoined
     }
-    
+
     /// <summary>
-    /// Class that strictly maintains object ownership only to players that qualify.
-    /// Qualification depends on response from localhost url and if OnReceiveTransferData returns true
+    ///     Class that strictly maintains object ownership only to players that qualify.
+    ///     Qualification depends on response from localhost url and if OnReceiveTransferData returns true
     /// </summary>
     public class OwnerShipManager : UdonSharpBehaviour
     {
-        #region Settings
-        /// <summary>
-        /// The logic to use when attempting to find a valid player
-        /// </summary>
-        [SerializeField] protected TransferLogic transferLogic = TransferLogic.FirstFound;
-        /// <summary>
-        /// List of players that are allowed to own the object.
-        /// This is a "soft" check, proper ownership still depends on the response from localhost url and if OnReceiveTransferData returns true.
-        /// An empty list means every player will be tested if they can own the object
-        /// </summary>
-        [SerializeField] protected string[] allowedPlayers = { };
-        /// <summary>
-        /// The url to test ownership against, apart from the port this shouldn't be changed
-        /// </summary>
-        [SerializeField] protected VRCUrl localhost = new VRCUrl("http://localhost:1254");
-        #endregion
-
         #region Private variables
-        private bool _isIntendedOwner = false;
+
+        private bool _isIntendedOwner;
+
         #endregion
 
-        #region Public API
-        /// <summary>
-        /// The "proper" way to request ownership, calling this function is the only way to receive ownership intentionally
-        /// </summary>
-        public void RequestOwnership()
-        {
-            if (!InList(Networking.LocalPlayer.displayName)) return;
-            
-            VRCStringDownloader.LoadUrl(localhost, this);
-        }
-
-        /// <summary>
-        /// Requests a reset of the ownership, this will reset the system that looks for a valid owner.
-        /// Helpful if we have exhausted the list and we suspect an earlier player on the list is able to take ownership.
-        /// Ideally this function should be bound to a button in the world.
-        /// </summary>
-        public void RequestResetOwnership()
-        {
-            if (!InList(Networking.LocalPlayer.displayName)) return;
-            
-            SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ResetOwnership));
-        }
-        #endregion
-        
         #region Virtual methods
+
         /// <summary>
-        /// Function for validating whether the data returned by the URL would allow the player to take ownership
+        ///     Function for validating whether the data returned by the URL would allow the player to take ownership
         /// </summary>
         /// <param name="data">The "key" to test if the player is allowed to take ownership</param>
         /// <returns>true if the player is allowed to take ownership, false otherwise</returns>
@@ -89,20 +53,72 @@ namespace com.SBFDevelopment.PCLink
         {
             return true;
         }
+
+        #endregion
+
+        #region Settings
+
+        /// <summary>
+        ///     The logic to use when attempting to find a valid player
+        /// </summary>
+        [SerializeField] protected TransferLogic transferLogic = TransferLogic.FirstFound;
+
+        /// <summary>
+        ///     List of players that are allowed to own the object.
+        ///     This is a "soft" check, proper ownership still depends on the response from localhost url and if
+        ///     OnReceiveTransferData returns true.
+        ///     An empty list means every player will be tested if they can own the object
+        /// </summary>
+        [SerializeField] protected string[] allowedPlayers = { };
+
+        /// <summary>
+        ///     The url to test ownership against, apart from the port this shouldn't be changed
+        /// </summary>
+        [SerializeField] protected VRCUrl localhost = new("http://localhost:1254");
+
+        #endregion
+
+        #region Public API
+
+        /// <summary>
+        ///     The "proper" way to request ownership, calling this function is the only way to receive ownership intentionally
+        /// </summary>
+        public void RequestOwnership()
+        {
+            if (!InList(Networking.LocalPlayer.displayName)) return;
+
+            VRCStringDownloader.LoadUrl(localhost, this);
+        }
+
+        /// <summary>
+        ///     Requests a reset of the ownership, this will reset the system that looks for a valid owner.
+        ///     Helpful if we have exhausted the list and we suspect an earlier player on the list is able to take ownership.
+        ///     Ideally this function should be bound to a button in the world.
+        /// </summary>
+        public void RequestResetOwnership()
+        {
+            if (!InList(Networking.LocalPlayer.displayName)) return;
+
+            SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ResetOwnership));
+        }
+
         #endregion
 
         #region Network methods
+
         /// <summary>
-        /// Only runnable by the Owner and the player calling this function must be whitelisted to do so (in the "allowedPlayers" list)
-        /// forcefully passes ownership to the player that would logically be the first in the order dictated by TransferLogic
+        ///     Only runnable by the Owner and the player calling this function must be whitelisted to do so (in the
+        ///     "allowedPlayers" list)
+        ///     forcefully passes ownership to the player that would logically be the first in the order dictated by TransferLogic
         /// </summary>
         [NetworkCallable]
         public void ResetOwnership()
         {
-            if (!Networking.LocalPlayer.IsOwner(gameObject) || !InList(NetworkCalling.CallingPlayer.displayName)) return;
-            
+            if (!Networking.LocalPlayer.IsOwner(gameObject) ||
+                !InList(NetworkCalling.CallingPlayer.displayName)) return;
+
             var players = GetSortedPlayerList(transferLogic == TransferLogic.LastJoined);
-    
+
             // Find the very first valid player in the sorted priority list
             foreach (var player in players)
             {
@@ -115,69 +131,60 @@ namespace com.SBFDevelopment.PCLink
                 break;
             }
         }
-        
+
         /// <summary>
-        /// Only runnable by the Owner and the player calling this function must be whitelisted to do so (in the "allowedPlayers" list).
-        /// This is the "correct" path to transfer ownership of the object.
-        /// Transfer will fail if OnReceiveTransferData(data) returns false.
+        ///     Only runnable by the Owner and the player calling this function must be whitelisted to do so (in the
+        ///     "allowedPlayers" list).
+        ///     This is the "correct" path to transfer ownership of the object.
+        ///     Transfer will fail if OnReceiveTransferData(data) returns false.
         /// </summary>
         /// <param name="data">data to pass to OnReceiveTransferData to test if ownership is allowed to pass</param>
         [NetworkCallable]
         public void TransferOwnership(string data)
         {
-            if (!InList(NetworkCalling.CallingPlayer.displayName) || !Networking.LocalPlayer.IsOwner(gameObject))
-            {
-                return;
-            }
+            if (!InList(NetworkCalling.CallingPlayer.displayName) ||
+                !Networking.LocalPlayer.IsOwner(gameObject)) return;
 
             if (OnReceiveTransferData(data))
             {
-                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(SignalOwnerShipChange), NetworkCalling.CallingPlayer.ToString());
+                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(SignalOwnerShipChange),
+                    NetworkCalling.CallingPlayer.ToString());
                 Networking.SetOwner(NetworkCalling.CallingPlayer, gameObject);
-                return;
             }
         }
-        
+
         /// <summary>
-        /// Only callable by the owner.
-        /// Signals to all users the object is about to change ownership and to whom.
-        /// If the intendedOwner is the localplayer this will set _isIntendedOwner to true.
-        /// _isIntendedOwner will be set to false otherwise.
+        ///     Only callable by the owner.
+        ///     Signals to all users the object is about to change ownership and to whom.
+        ///     If the intendedOwner is the localplayer this will set _isIntendedOwner to true.
+        ///     _isIntendedOwner will be set to false otherwise.
         /// </summary>
         /// <param name="intendedOwner">The player the ownership is intended to be passed to</param>
         [NetworkCallable]
         public void SignalOwnerShipChange(string intendedOwner)
         {
-            if (!NetworkCalling.CallingPlayer.IsOwner(gameObject))
-            {
-                return;
-            }
+            if (!NetworkCalling.CallingPlayer.IsOwner(gameObject)) return;
 
             _isIntendedOwner = Networking.LocalPlayer.ToString() == intendedOwner;
         }
+
         #endregion
 
         #region Udon events
+
         public override void OnPlayerJoined(VRCPlayerApi player)
         {
             if (Networking.LocalPlayer == player)
             {
-                if (transferLogic == TransferLogic.LastJoined)
-                {
-                    RequestOwnership();
-                }
+                if (transferLogic == TransferLogic.LastJoined) RequestOwnership();
 
                 return;
             }
-            
+
             if (!Networking.LocalPlayer.IsOwner(gameObject))
                 return;
 
-            if (!_isIntendedOwner)
-            {
-                Networking.SetOwner(player, gameObject);
-                return;
-            }
+            if (!_isIntendedOwner) Networking.SetOwner(player, gameObject);
         }
 
         public override bool OnOwnershipRequest(VRCPlayerApi requestingPlayer, VRCPlayerApi requestedOwner)
@@ -195,10 +202,7 @@ namespace com.SBFDevelopment.PCLink
             }
 
             // Are we the intended owner?
-            if (_isIntendedOwner)
-            {
-                return;
-            }
+            if (_isIntendedOwner) return;
 
             // Do we qualify as a potential owner?
             if (InList(Networking.LocalPlayer.displayName))
@@ -209,19 +213,12 @@ namespace com.SBFDevelopment.PCLink
 
             // Is there someone to pass ownership to?
             var nextValidOwner = GetNextValidOwner();
-            if (nextValidOwner != null)
-            {
-                Networking.SetOwner(nextValidOwner, gameObject);
-                return;
-            }
+            if (nextValidOwner != null) Networking.SetOwner(nextValidOwner, gameObject);
         }
 
         public override void OnStringLoadSuccess(IVRCStringDownload result)
         {
-            if (!result.Url.Equals(localhost))
-            {
-                return;
-            }
+            if (!result.Url.Equals(localhost)) return;
 
             // Are we the current owner?
             if (!Networking.LocalPlayer.IsOwner(gameObject))
@@ -235,31 +232,25 @@ namespace com.SBFDevelopment.PCLink
 
             // Is there someone to pass ownership to?
             var nextValidOwner = GetNextValidOwner();
-            if (nextValidOwner != null)
-            {
-                Networking.SetOwner(nextValidOwner, gameObject);
-                return;
-            }
+            if (nextValidOwner != null) Networking.SetOwner(nextValidOwner, gameObject);
         }
 
         public override void OnStringLoadError(IVRCStringDownload result)
         {
             if (!result.Url.Equals(localhost) || !Networking.LocalPlayer.IsOwner(gameObject))
                 return;
-            
+
             // Is there someone to pass ownership to?
             var nextValidOwner = GetNextValidOwner();
-            if (nextValidOwner != null)
-            {
-                Networking.SetOwner(nextValidOwner, gameObject);
-                return;
-            }
+            if (nextValidOwner != null) Networking.SetOwner(nextValidOwner, gameObject);
         }
+
         #endregion
 
         #region Helpers
+
         /// <summary>
-        /// Tests if the provided playername is in the list (if the list isn't empty)
+        ///     Tests if the provided playername is in the list (if the list isn't empty)
         /// </summary>
         /// <param name="playerName">The name to test</param>
         /// <returns>True if playerName is in the allowedPlayers list or the list is empty, false otherwise</returns>
@@ -267,7 +258,7 @@ namespace com.SBFDevelopment.PCLink
         {
             if (allowedPlayers.Length == 0)
                 return true;
-            
+
             // ReSharper disable once LoopCanBeConvertedToQuery
             foreach (var player in allowedPlayers)
                 if (playerName == player)
@@ -277,16 +268,17 @@ namespace com.SBFDevelopment.PCLink
         }
 
         /// <summary>
-        /// Returns the next player that would qualify for ownership after the current player according to the set transferLogic
+        ///     Returns the next player that would qualify for ownership after the current player according to the set
+        ///     transferLogic
         /// </summary>
         /// <returns>The next player that would qualify for ownership after the current player</returns>
         private VRCPlayerApi GetNextValidOwner()
         {
             var players = GetSortedPlayerList(transferLogic == TransferLogic.LastJoined);
-            
+
             var totalPlayers = players.Length;
             var startingIndex = 0;
-            
+
             for (var i = 0; i < totalPlayers; i++)
             {
                 if (players[i] == null || players[i].playerId != Networking.LocalPlayer.playerId) continue;
@@ -300,25 +292,25 @@ namespace com.SBFDevelopment.PCLink
                 if (player == null || !player.IsValid() || !InList(player.displayName)) continue;
                 return player;
             }
-            
+
             return null;
         }
-        
+
         /// <summary>
-        /// Get a player list sorted based on time in instance
+        ///     Get a player list sorted based on time in instance
         /// </summary>
         /// <param name="reverse">Whether the list should go from youngest to oldest player</param>
         /// <returns>A player list sorted based on time in instance</returns>
         private VRCPlayerApi[] GetSortedPlayerList(bool reverse = false)
         {
             var players = VRCPlayerApi.GetPlayers();
-            
+
             var n = players.Length;
-    
+
             for (var i = 0; i < n - 1; i++)
             {
                 var swapIndex = i;
-        
+
                 for (var j = i + 1; j < n; j++)
                 {
                     if (players[j] == null || !players[j].IsValid()) continue;
@@ -331,20 +323,18 @@ namespace com.SBFDevelopment.PCLink
                     var checkResult = reverse
                         ? players[j].playerId > players[swapIndex].playerId
                         : players[j].playerId < players[swapIndex].playerId;
-                    if (checkResult)
-                    {
-                        swapIndex = j;
-                    }
+                    if (checkResult) swapIndex = j;
                 }
 
                 // Swap the found player with the player at index i
-                VRCPlayerApi temp = players[swapIndex];
+                var temp = players[swapIndex];
                 players[swapIndex] = players[i];
                 players[i] = temp;
             }
-            
+
             return players;
         }
+
         #endregion
     }
 }

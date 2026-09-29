@@ -32,7 +32,10 @@ namespace com.SBFDevelopment.PCLink
                 jsonData.Add("Data", token);
             }
             
-            SendData("PCLink.JSON", jsonData.ToString(), eventTarget);
+            if (VRCJson.TrySerializeToJson(jsonData, JsonExportType.Minify, out var jsonToken))
+            {
+                SendData("PCLink.JSON", jsonToken.String, eventTarget);
+            }
         }
         
         public void SendWebRequest(string url, UrlRequestType requestType, string header = "",
@@ -52,7 +55,10 @@ namespace com.SBFDevelopment.PCLink
                 jsonData.Add("Body", bodyData);
             }
             
-            SendData("PCLink.URL", jsonData.ToString(), eventTarget);
+            if (VRCJson.TrySerializeToJson(jsonData, JsonExportType.Minify, out var jsonToken))
+            {
+                SendData("PCLink.URL", jsonToken.String, eventTarget);
+            }
         }
         
         public void SendData(string requestType, string data, NetworkEventTarget eventTarget = NetworkEventTarget.Owner)
